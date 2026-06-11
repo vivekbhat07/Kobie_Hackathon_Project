@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: 155734788051.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
+        ports:
+        - containerPort: 3001
+        env:
+        - name: DB_HOST
+          value: "oneclick-postgres.c52qmcwm825v.ap-south-1.rds.amazonaws.com"
+
+        - name: DB_USER
+          value: "postgres"
+
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+          secretKeyRef:
+            name: db-secret
+            key: DB_PASSWORD

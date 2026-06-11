@@ -1,0 +1,22 @@
+frontend:
+  image:
+    repository: 155734788051.dkr.ecr.ap-south-1.amazonaws.com/frontend
+    tag: latest
+  replicas: 2
+  service:
+    type: LoadBalancer
+    port: 3000
+
+backend:
+  image:
+    repository: 155734788051.dkr.ecr.ap-south-1.amazonaws.com/backend
+    tag: latest
+  replicas: 2
+  service:
+    type: ClusterIP
+    port: 3001
+
+database:
+  host: oneclick-postgres.c52qmcwm825v.ap-south-1.rds.amazonaws.com
+  user: postgres
+  password: "YourStrongPassword123!"

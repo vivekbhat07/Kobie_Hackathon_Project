@@ -1,0 +1,49 @@
+# Node.js
+node_modules/
+npm-debug.log
+
+# Environment files
+.env
+.env.*
+
+# Build folders
+build/
+dist/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+
+# Jenkins
+.jenkins/
+
+# Misc
+*.bak
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfvars
+crash.log
+
+# Environment variables
+.env
+.env.*
