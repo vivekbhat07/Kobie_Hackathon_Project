@@ -1,7 +1,7 @@
 pipeline {
 agent any
 
-
+```
 environment {
     AWS_REGION = 'ap-south-1'
     AWS_ACCOUNT_ID = '155734788051'
@@ -75,8 +75,11 @@ stages {
     stage('Update values.yaml') {
         steps {
             sh """
-            sed -i '0,/tag:.*/s/tag:.*/tag: ${IMAGE_TAG}/' gitops/helm/oneclick/values.yaml
-            sed -i '0,/tag:.*/s/tag:.*/tag: ${IMAGE_TAG}/2' gitops/helm/oneclick/values.yaml
+            yq e '.backend.image.tag = "${IMAGE_TAG}"' -i gitops/helm/oneclick/values.yaml
+            yq e '.frontend.image.tag = "${IMAGE_TAG}"' -i gitops/helm/oneclick/values.yaml
+
+            echo "Updated values.yaml:"
+            cat gitops/helm/oneclick/values.yaml
             """
         }
     }
@@ -98,12 +101,12 @@ stages {
                     )
                 ]) {
 
-                    sh '''
+                    sh """
                     git add .
-                    git commit -m "Update image tag to '${BUILD_NUMBER}'" || true
+                    git commit -m "Update image tag to ${IMAGE_TAG}" || true
 
                     git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/vaishjp/oneclick-gitops.git main
-                    '''
+                    """
                 }
             }
         }
@@ -119,6 +122,6 @@ post {
         echo 'Pipeline failed'
     }
 }
-
+```
 
 }
