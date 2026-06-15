@@ -38,7 +38,7 @@ resource "aws_instance" "jenkins" {
   subnet_id = aws_subnet.public_1.id
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
 
-  associate_public_ip_address = true
+  associate_public_ip_address = false
 
   tags = {
     Name = "jenkins-server"
