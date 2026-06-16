@@ -80,7 +80,7 @@ export default function App() {
           <span style={{ fontSize: "24px" }}>⚡</span>
           <div>
             <div style={{ fontWeight: 700, fontSize: "18px" }}>OneClick GitOps</div>
-            <div style={{ fontSize: "12px", color: "#94a3b8" }}>Kobie × PES Hackathon</div>
+            <div style={{ fontSize: "12px", color: "#94a3b8" }}>Kobie × PES Hackathon · v2</div>
           </div>
         </div>
         <span style={{
