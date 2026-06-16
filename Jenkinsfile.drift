@@ -1,0 +1,50 @@
+// Jenkinsfile.drift — create this file in Kobie_Hackathon_Project repo
+pipeline {
+    agent any
+    triggers {
+        cron('0 2 * * *')  // 2 AM daily
+    }
+    environment {
+        AWS_REGION     = 'ap-south-1'
+        AWS_ACCOUNT_ID = '155734788051'
+    }
+    stages {
+        stage('Terraform Drift Detection') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'AWS_ACCESS_KEY_ID',     variable: 'AWS_ACCESS_KEY'),
+                    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_KEY')
+                ]) {
+                    dir('one-click-infra') {
+                        sh '''
+                            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY
+                            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY
+                            terraform init -reconfigure
+                            echo "Running drift detection..."
+                            terraform plan -detailed-exitcode -out=drift.tfplan 2>&1 | tee drift-report.txt
+                            EXIT_CODE=${PIPESTATUS[0]}
+                            if [ $EXIT_CODE -eq 2 ]; then
+                                echo "DRIFT DETECTED — infrastructure has changed outside Terraform"
+                                cat drift-report.txt
+                                exit 1
+                            elif [ $EXIT_CODE -eq 0 ]; then
+                                echo "No drift detected — infrastructure matches Terraform state"
+                            else
+                                echo "Terraform plan failed"
+                                exit 1
+                            fi
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            echo "ALERT: Terraform drift detected or plan failed. Review drift-report.txt"
+        }
+        success {
+            echo "Drift check passed — no infrastructure drift detected"
+        }
+    }
+}
