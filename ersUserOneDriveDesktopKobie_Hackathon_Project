@@ -39,7 +39,6 @@ const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: "postgres",
-  ssl: { rejectUnauthorized: false },
 });
 
 app.get("/", (req, res) => {
