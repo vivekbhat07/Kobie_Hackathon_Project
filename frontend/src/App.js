@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-const API = "";  // same origin via ingress /api/*
+const API = "";
 
 function StatusBadge({ status }) {
   const ok = status === "healthy";
@@ -68,7 +68,6 @@ export default function App() {
       fontFamily: "'Inter', system-ui, sans-serif",
       padding: "0",
     }}>
-      {/* Header */}
       <div style={{
         background: "#0f172a",
         color: "white",
@@ -95,10 +94,7 @@ export default function App() {
         </span>
       </div>
 
-      {/* Main */}
       <div style={{ maxWidth: "900px", margin: "0 auto", padding: "40px 24px" }}>
-
-        {/* Title */}
         <div style={{ marginBottom: "36px" }}>
           <h1 style={{ fontSize: "32px", fontWeight: 800, color: "#0f172a", margin: 0 }}>
             One-Click Environment Provisioner
@@ -108,7 +104,6 @@ export default function App() {
           </p>
         </div>
 
-        {/* Status card */}
         <div style={{
           background: "white",
           borderRadius: "16px",
@@ -156,7 +151,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Metrics grid */}
         <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "24px" }}>
           <MetricCard label="Autoscaling" value="HPA + CA" sub="CPU-triggered, node-aware" />
           <MetricCard label="Auth Model" value="IRSA" sub="Zero stored credentials" />
@@ -164,7 +158,6 @@ export default function App() {
           <MetricCard label="Observability" value="Prometheus" sub="Grafana dashboards live" />
         </div>
 
-        {/* Architecture */}
         <div style={{
           background: "white",
           borderRadius: "16px",
@@ -175,30 +168,15 @@ export default function App() {
             Pipeline → Cluster Flow
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            {[
-              "Git Push",
-              "→",
-              "Jenkins CI",
-              "→",
-              "ECR Push",
-              "→",
-              "GitOps Repo",
-              "→",
-              "FluxCD",
-              "→",
-              "EKS",
-            ].map((step, i) => (
-              <span
-                key={i}
-                style={{
-                  background: step === "→" ? "transparent" : "#f1f5f9",
-                  color: step === "→" ? "#94a3b8" : "#334155",
-                  padding: step === "→" ? "0 2px" : "6px 14px",
-                  borderRadius: "8px",
-                  fontSize: step === "→" ? "18px" : "13px",
-                  fontWeight: step === "→" ? 400 : 600,
-                }}
-              >
+            {["Git Push","→","Jenkins CI","→","ECR Push","→","GitOps Repo","→","FluxCD","→","EKS"].map((step, i) => (
+              <span key={i} style={{
+                background: step === "→" ? "transparent" : "#f1f5f9",
+                color: step === "→" ? "#94a3b8" : "#334155",
+                padding: step === "→" ? "0 2px" : "6px 14px",
+                borderRadius: "8px",
+                fontSize: step === "→" ? "18px" : "13px",
+                fontWeight: step === "→" ? 400 : 600,
+              }}>
                 {step}
               </span>
             ))}
