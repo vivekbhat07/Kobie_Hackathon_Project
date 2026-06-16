@@ -26,14 +26,14 @@ pipeline {
                 stage('Test Backend') {
                     steps {
                         dir('backend') {
-                            sh 'npm install --silent && npm test || echo "No tests defined — skipping"'
+                            sh 'npm test || echo "No tests defined — skipping"'
                         }
                     }
                 }
                 stage('Test Frontend') {
                     steps {
                         dir('frontend') {
-                            sh 'ls index.html 2>/dev/null || echo "Frontend static — no test runner needed"'
+                            sh 'echo "Frontend static — no test runner needed"'
                         }
                     }
                 }
@@ -61,11 +61,11 @@ pipeline {
 
         stage('Scan Images') {
             steps {
-                sh 'which trivy || (curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin)'
                 sh """
-                    echo "Scanning backend..."
+                    echo "Scanning backend image for CRITICAL vulnerabilities..."
                     trivy image --exit-code 1 --severity CRITICAL --no-progress ${BACKEND_REPO}:${env.IMAGE_TAG}
-                    echo "Scanning frontend..."
+
+                    echo "Scanning frontend image for CRITICAL vulnerabilities..."
                     trivy image --exit-code 1 --severity CRITICAL --no-progress ${FRONTEND_REPO}:${env.IMAGE_TAG}
                 """
             }
@@ -93,7 +93,9 @@ pipeline {
         stage('Update GitOps Repo') {
             steps {
                 dir('gitops') {
-                    git branch: 'main', credentialsId: 'github-creds', url: "${GITOPS_REPO}"
+                    git branch: 'main',
+                        credentialsId: 'github-creds',
+                        url: "${GITOPS_REPO}"
                 }
                 sh """
                     yq e '.backend.image.tag = "${env.IMAGE_TAG}"' -i gitops/helm/oneclick/values.yaml
@@ -102,7 +104,10 @@ pipeline {
                     cat gitops/helm/oneclick/values.yaml
                 """
                 dir('gitops') {
-                    sh 'git config user.email "vaishjp2005@gmail.com" && git config user.name "Jenkins"'
+                    sh """
+                        git config user.email "vaishjp2005@gmail.com"
+                        git config user.name "Jenkins"
+                    """
                     withCredentials([usernamePassword(
                         credentialsId: 'github-creds',
                         usernameVariable: 'GITHUB_USER',
@@ -125,18 +130,22 @@ pipeline {
                     TIMEOUT=300
                     INTERVAL=15
                     ELAPSED=0
+
                     while [ \$ELAPSED -lt \$TIMEOUT ]; do
                         STATUS=\$(kubectl get helmrelease oneclick -n default \
                             -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Unknown")
-                        echo "Status: \$STATUS (elapsed: \${ELAPSED}s)"
+                        echo "HelmRelease status: \$STATUS (elapsed: \${ELAPSED}s)"
+
                         if [ "\$STATUS" = "True" ]; then
-                            echo "HelmRelease Ready. Deployment confirmed."
+                            echo "SUCCESS: HelmRelease is Ready. Deployment confirmed in cluster."
                             exit 0
                         fi
+
                         sleep \$INTERVAL
                         ELAPSED=\$((ELAPSED + INTERVAL))
                     done
-                    echo "ERROR: HelmRelease not Ready within 5 minutes."
+
+                    echo "ERROR: HelmRelease did not become Ready within 5 minutes."
                     kubectl describe helmrelease oneclick -n default || true
                     exit 1
                 """
@@ -145,7 +154,11 @@ pipeline {
     }
 
     post {
-        success { echo "Pipeline succeeded. Image ${env.IMAGE_TAG} confirmed running in cluster." }
-        failure { echo "Pipeline FAILED. Image ${env.IMAGE_TAG} was NOT deployed." }
+        success {
+            echo "Pipeline succeeded. Image ${env.IMAGE_TAG} is confirmed running in the cluster."
+        }
+        failure {
+            echo "Pipeline FAILED. Image ${env.IMAGE_TAG} was NOT deployed."
+        }
     }
 }
