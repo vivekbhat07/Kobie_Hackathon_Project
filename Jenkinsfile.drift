@@ -1,4 +1,4 @@
-```groovy
+
 // Jenkinsfile.drift
 pipeline {
     agent any
@@ -103,4 +103,4 @@ pipeline {
         }
     }
 }
-```
+
