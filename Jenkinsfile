@@ -97,28 +97,30 @@ pipeline {
                         credentialsId: 'github-creds',
                         url: "${GITOPS_REPO}"
                 }
-                sh """
-                    yq e '.backend.image.tag = "${env.IMAGE_TAG}"' -i gitops/helm/oneclick/values.yaml
-                    yq e '.frontend.image.tag = "${env.IMAGE_TAG}"' -i gitops/helm/oneclick/values.yaml
-                    echo "Updated values.yaml:"
-                    cat gitops/helm/oneclick/values.yaml
-                """
-                dir('gitops') {
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-creds',
+                    usernameVariable: 'GITHUB_USER',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )]) {
                     sh """
+                        # Update the HelmRelease — this is what Flux actually reads
+                        sed -i 's/tag: "[^"]*"/tag: "${env.IMAGE_TAG}"/g' \
+                          gitops/apps/oneclick/helmrelease.yaml
+
+                        # Keep values.yaml in sync too
+                        sed -i 's/tag: "[^"]*"/tag: "${env.IMAGE_TAG}"/g' \
+                          gitops/helm/oneclick/values.yaml
+
+                        echo "=== Updated helmrelease.yaml tags ==="
+                        grep "tag:" gitops/apps/oneclick/helmrelease.yaml
+
+                        cd gitops
                         git config user.email "vaishjp2005@gmail.com"
                         git config user.name "Jenkins"
+                        git add apps/oneclick/helmrelease.yaml helm/oneclick/values.yaml
+                        git commit -m "chore: deploy ${env.IMAGE_TAG}" || echo "Nothing to commit"
+                        git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/vaishjp/oneclick-gitops.git main
                     """
-                    withCredentials([usernamePassword(
-                        credentialsId: 'github-creds',
-                        usernameVariable: 'GITHUB_USER',
-                        passwordVariable: 'GITHUB_TOKEN'
-                    )]) {
-                        sh """
-                            git add .
-                            git commit -m "chore: deploy ${env.IMAGE_TAG}" || true
-                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/vaishjp/oneclick-gitops.git main
-                        """
-                    }
                 }
             }
         }
