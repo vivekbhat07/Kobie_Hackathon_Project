@@ -1,3 +1,17 @@
+resource "aws_launch_template" "node_group" {
+  name_prefix   = "oneclick-node-"
+  instance_type = var.node_instance_types[0]
+
+  vpc_security_group_ids = [aws_security_group.eks_node_sg.id]
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "oneclick-node"
+    }
+  }
+}
+
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "oneclick-node-group"
@@ -9,12 +23,15 @@ resource "aws_eks_node_group" "main" {
   ]
 
   scaling_config {
-    desired_size = 2
-    min_size     = 1
-    max_size     = 3
+    desired_size = var.node_desired_size
+    min_size     = var.node_min_size
+    max_size     = var.node_max_size
   }
 
-  instance_types = ["t3.medium"]
+  launch_template {
+    id      = aws_launch_template.node_group.id
+    version = aws_launch_template.node_group.latest_version
+  }
 
   depends_on = [
     aws_iam_role_policy_attachment.worker_node_policy,
