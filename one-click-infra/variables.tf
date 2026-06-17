@@ -55,7 +55,7 @@ variable "db_engine_version" {
 variable "db_multi_az" {
   description = "Whether RDS runs Multi-AZ for high availability"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "db_username" {
