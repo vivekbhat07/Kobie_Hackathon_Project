@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'dind-agent' }
 
     environment {
         AWS_REGION      = 'ap-south-1'
