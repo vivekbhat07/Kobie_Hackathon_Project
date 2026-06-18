@@ -69,3 +69,28 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "aws_region" {
+  type    = string
+  default = "ap-south-1"
+}
+
+variable "github_owner" {
+  type    = string
+  default = "vaishjp"
+}
+
+variable "gitops_repo_name" {
+  type    = string
+  default = "oneclick-gitops"
+}
+
+variable "gitops_branch" {
+  type    = string
+  default = "main"
+}
+
+variable "gitops_path" {
+  type    = string
+  default = "./clusters/my-cluster"
+}
