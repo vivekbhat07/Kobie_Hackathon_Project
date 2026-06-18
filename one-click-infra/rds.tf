@@ -12,24 +12,27 @@ resource "aws_db_subnet_group" "main" {
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier             = "oneclick-postgres"
+  identifier = "oneclick-postgres"
 
-  engine                 = "postgres"
-  engine_version         = "17.5"
+  engine         = "postgres"
+  engine_version = var.db_engine_version
 
-  instance_class         = "db.t3.micro"
+  instance_class = var.db_instance_class
 
-  allocated_storage      = 20
-  storage_type           = "gp3"
+  allocated_storage = 20
+  storage_type       = "gp3"
 
-  username               = var.db_username
-  password               = var.db_password
+  multi_az = var.db_multi_az
+
+  username = var.db_username
+  password = var.db_password
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
-  publicly_accessible    = false
-  skip_final_snapshot    = true
+  publicly_accessible  = false
+  skip_final_snapshot  = true
+  deletion_protection  = false
 
   tags = {
     Name = "oneclick-postgres"
