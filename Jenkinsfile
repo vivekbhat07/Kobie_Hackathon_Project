@@ -128,6 +128,7 @@ pipeline {
         stage('Verify Reconciliation') {
             steps {
                 sh """
+                    aws eks update-kubeconfig --name oneclick-cluster --region ap-south-1
                     echo "Polling FluxCD HelmRelease status..."
                     TIMEOUT=300
                     INTERVAL=15
