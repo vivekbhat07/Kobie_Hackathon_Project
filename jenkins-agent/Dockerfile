@@ -27,7 +27,11 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
     rm kubectl
 
 # Trivy
-RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
+
+RUN curl -fsSL -o trivy.tar.gz \
+    "https://github.com/aquasecurity/trivy/releases/download/v0.65.0/trivy_0.65.0_Linux-64bit.tar.gz" && \
+    tar -zxf trivy.tar.gz -C /usr/local/bin trivy && \
+    rm trivy.tar.gz
 
 # Node.js (for npm test stage)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
