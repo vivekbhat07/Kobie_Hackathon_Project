@@ -1,0 +1,32 @@
+name: Build and Push Jenkins Agent Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'jenkins-agent/Dockerfile'
+      - '.github/workflows/build-jenkins-agent.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::155734788051:role/oneclick-github-actions-ecr
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        run: |
+          docker build -t 155734788051.dkr.ecr.ap-south-1.amazonaws.com/jenkins-agent:latest jenkins-agent/
+          docker push 155734788051.dkr.ecr.ap-south-1.amazonaws.com/jenkins-agent:latest
