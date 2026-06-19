@@ -1,40 +1,40 @@
 name: Build and Push Jenkins Agent Image
- 
+
 on:
   push:
     branches: [main]
     paths:
       - 'jenkins-agent/Dockerfile'
       - '.github/workflows/build-jenkins-agent.yml'
- 
+
 permissions:
   id-token: write
   contents: read
- 
+
 env:
   AWS_REGION: ap-south-1
   ECR_REPOSITORY: jenkins-agent
- 
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
- 
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::155734788051:role/oneclick-github-actions-ecr
           aws-region: ${{ env.AWS_REGION }}
- 
+
       - name: Login to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
- 
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
- 
+
       # Build with BuildKit cache so unchanged layers (apt installs,
       # curl downloads for aws-cli/kubectl/trivy/node) aren't re-pulled
       # on every push — this is what made the Trivy step flaky/slow before.
@@ -49,4 +49,3 @@ jobs:
             ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
- 

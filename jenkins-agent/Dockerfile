@@ -1,17 +1,17 @@
 FROM jenkins/inbound-agent:latest
- 
+
 USER root
- 
+
 # ---- Versions (pin everything explicitly so builds are reproducible) ----
 ARG KUBECTL_VERSION=v1.30.0
 ARG TRIVY_VERSION=0.65.0
 ARG NODE_MAJOR=20
- 
+
 # ---- Base deps used by multiple steps below ----
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl gnupg lsb-release unzip tar && \
     rm -rf /var/lib/apt/lists/*
- 
+
 # ---- Docker CLI ----
 RUN install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
@@ -21,31 +21,31 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
     apt-get update && \
     apt-get install -y --no-install-recommends docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
- 
+
 # ---- AWS CLI v2 ----
 RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
     unzip -q /tmp/awscliv2.zip -d /tmp && \
     /tmp/aws/install && \
     rm -rf /tmp/awscliv2.zip /tmp/aws && \
     aws --version
- 
+
 # ---- kubectl (pinned version, no extra curl-in-curl) ----
 RUN curl -fL -o /usr/local/bin/kubectl \
     "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" && \
     chmod +x /usr/local/bin/kubectl && \
     kubectl version --client
- 
+
 # ---- Trivy (direct release asset, pinned, verbose on failure) ----
 RUN curl -fL -o /tmp/trivy.tar.gz \
     "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" && \
     tar -zxf /tmp/trivy.tar.gz -C /usr/local/bin trivy && \
     rm -f /tmp/trivy.tar.gz && \
     trivy --version
- 
+
 # ---- Node.js (for npm test stage) ----
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/* && \
     node --version
- 
+
 USER jenkins
