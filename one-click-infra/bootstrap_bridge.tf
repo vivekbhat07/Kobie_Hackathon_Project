@@ -27,12 +27,21 @@ resource "null_resource" "bootstrap_bridge" {
       $sourceCtrl = kubectl get deployment -n flux-system source-controller 2>$null
       if ($fluxNs -and $sourceCtrl) {
         Write-Host "FluxCD already present - reconciling."
-        flux reconcile source git oneclick -n flux-system
-        flux reconcile kustomization apps -n flux-system
       } else {
         Write-Host "FluxCD not found - bootstrapping."
-        flux bootstrap github --owner=${var.github_owner} --repository=${var.gitops_repo_name} --branch=${var.gitops_branch} --path=${var.gitops_path} --personal
+        flux bootstrap github --owner=vaishjp --repository=oneclick-gitops --branch=main --path=./clusters/my-cluster --personal
       }
+
+      $appsKustomization = kubectl get kustomization apps -n flux-system 2>$null
+      if (-not $appsKustomization) {
+        Write-Host "apps Kustomization missing - creating it."
+        flux create kustomization apps --source=GitRepository/flux-system --path="./apps" --prune=true --interval=5m --namespace=flux-system
+      } else {
+        Write-Host "apps Kustomization already exists."
+      }
+
+      flux reconcile source git flux-system -n flux-system
+      flux reconcile kustomization apps -n flux-system
 
       Write-Host "bootstrap_bridge done."
     EOT
