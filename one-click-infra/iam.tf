@@ -177,6 +177,21 @@ resource "aws_iam_policy" "jenkins_ecr" {
   })
 }
 
+resource "aws_iam_policy" "jenkins_eks" {
+  name = "oneclick-jenkins-eks"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "eks:DescribeCluster"
+      ]
+      Resource = aws_eks_cluster.main.arn
+    }]
+  })
+}
+
 resource "aws_iam_role" "jenkins_irsa" {
   name = "oneclick-jenkins-irsa"
 
@@ -201,6 +216,26 @@ resource "aws_iam_role" "jenkins_irsa" {
 resource "aws_iam_role_policy_attachment" "jenkins_attach" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = aws_iam_policy.jenkins_ecr.arn
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_eks_attach" {
+  role       = aws_iam_role.jenkins_irsa.name
+  policy_arn = aws_iam_policy.jenkins_eks.arn
+}
+
+resource "aws_eks_access_entry" "jenkins" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.jenkins_irsa.arn
+}
+
+resource "aws_eks_access_policy_association" "jenkins_view" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.jenkins_irsa.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
 }
 
 resource "aws_iam_policy" "backend_app" {
@@ -288,7 +323,7 @@ resource "aws_iam_policy" "jenkins_secretsmanager" {
         "secretsmanager:GetSecretValue",
         "secretsmanager:DescribeSecret"
       ]
-      Resource = "arn:aws:secretsmanager:${var.region}:*:secret:oneclick/github-pat*"
+      Resource = "arn:aws:secretsmanager:ap-south-1:*:secret:oneclick/github-pat*"
     }]
   })
 }
