@@ -90,6 +90,11 @@ pipeline {
                         aws ecr get-login-password --region ${AWS_REGION} | \
                         docker login --username AWS --password-stdin \
                         ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+
+                        for repo in backend frontend; do
+                            aws ecr batch-delete-image --repository-name \$repo --region ${AWS_REGION} --image-ids imageTag=${env.IMAGE_TAG} >/dev/null 2>&1 || true
+                        done
+
                         docker push ${BACKEND_REPO}:${env.IMAGE_TAG}
                         docker push ${FRONTEND_REPO}:${env.IMAGE_TAG}
                     """
@@ -111,11 +116,14 @@ pipeline {
                         passwordVariable: 'GITHUB_TOKEN'
                     )]) {
                         sh """
-                            # Update the HelmRelease — this is what Flux actually reads
+                            if [ -z "\$GITHUB_TOKEN" ]; then
+                                echo "ERROR: GITHUB_TOKEN is empty. Check the 'jenkins-github-token' secret and the github-creds JCasC credential."
+                                exit 1
+                            fi
+
                             sed -i 's/tag: "[^"]*"/tag: "${env.IMAGE_TAG}"/g' \
                               gitops/apps/oneclick/helmrelease.yaml
 
-                            # Keep values.yaml in sync too
                             sed -i 's/tag: "[^"]*"/tag: "${env.IMAGE_TAG}"/g' \
                               gitops/helm/oneclick/values.yaml
 
