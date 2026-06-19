@@ -4,7 +4,7 @@ USER root
 
 # ---- Versions (pin everything explicitly so builds are reproducible) ----
 ARG KUBECTL_VERSION=v1.30.0
-ARG TRIVY_VERSION=0.65.0
+ARG TRIVY_VERSION=0.71.1
 ARG NODE_MAJOR=20
 
 # ---- Base deps used by multiple steps below ----
