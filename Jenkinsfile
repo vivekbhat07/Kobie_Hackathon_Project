@@ -73,20 +73,13 @@ pipeline {
 
         stage('Push to ECR') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY'),
-                    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_KEY')
-                ]) {
-                    sh """
-                        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}
-                        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
-                        aws ecr get-login-password --region ${AWS_REGION} | \
-                        docker login --username AWS --password-stdin \
-                        ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                        docker push ${BACKEND_REPO}:${env.IMAGE_TAG}
-                        docker push ${FRONTEND_REPO}:${env.IMAGE_TAG}
-                    """
-                }
+                sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    docker push ${BACKEND_REPO}:${env.IMAGE_TAG}
+                    docker push ${FRONTEND_REPO}:${env.IMAGE_TAG}
+                """
             }
         }
 
