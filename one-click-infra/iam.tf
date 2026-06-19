@@ -226,6 +226,7 @@ resource "aws_iam_role_policy_attachment" "jenkins_eks_attach" {
 resource "aws_eks_access_entry" "jenkins" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = aws_iam_role.jenkins_irsa.arn
+  user_name     = "jenkins-pipeline"
 }
 
 resource "aws_eks_access_policy_association" "jenkins_view" {
