@@ -43,6 +43,22 @@ resource "null_resource" "bootstrap_bridge" {
       flux reconcile source git flux-system -n flux-system
       flux reconcile kustomization apps -n flux-system
 
+      Write-Host "Waiting for CRDs from apps HelmReleases (prometheus, external-secrets) to register..."
+      for ($i = 1; $i -le 30; $i++) {
+        $crdReady = kubectl get crd servicemonitors.monitoring.coreos.com 2>$null
+        $esoCrdReady = kubectl get crd externalsecrets.external-secrets.io 2>$null
+        if ($crdReady -and $esoCrdReady) {
+          Write-Host "Required CRDs are registered."
+          break
+        }
+        Write-Host "CRDs not ready yet (attempt $i/30)..."
+        Start-Sleep -Seconds 10
+      }
+
+      flux reconcile kustomization alerting -n flux-system
+      flux reconcile kustomization monitoring-config -n flux-system
+      flux reconcile kustomization external-secrets-config -n flux-system
+
       Write-Host "bootstrap_bridge done."
     EOT
   }
