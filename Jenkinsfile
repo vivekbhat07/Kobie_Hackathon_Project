@@ -2,11 +2,11 @@ pipeline {
     agent { label 'dind-agent' }
 
     environment {
-        AWS_REGION      = 'ap-south-1'
-        AWS_ACCOUNT_ID  = '155734788051'
-        BACKEND_REPO    = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend"
-        FRONTEND_REPO   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend"
-        GITOPS_REPO     = 'https://github.com/vaishjp/oneclick-gitops.git'
+        AWS_REGION     = 'ap-south-1'
+        AWS_ACCOUNT_ID = '155734788051'
+        BACKEND_REPO   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend"
+        FRONTEND_REPO  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend"
+        GITOPS_REPO    = 'https://github.com/vaishjp/oneclick-gitops.git'
     }
 
     stages {
@@ -16,7 +16,10 @@ pipeline {
                 checkout scm
                 container('jnlp') {
                     script {
-                        env.IMAGE_TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                        env.IMAGE_TAG = sh(
+                            script: 'git rev-parse --short HEAD',
+                            returnStdout: true
+                        ).trim()
                         echo "Image tag: ${env.IMAGE_TAG}"
                     }
                 }
@@ -25,6 +28,7 @@ pipeline {
 
         stage('Test') {
             parallel {
+
                 stage('Test Backend') {
                     steps {
                         container('jnlp') {
@@ -34,6 +38,7 @@ pipeline {
                         }
                     }
                 }
+
                 stage('Test Frontend') {
                     steps {
                         container('jnlp') {
@@ -43,11 +48,13 @@ pipeline {
                         }
                     }
                 }
+
             }
         }
 
         stage('Build Images') {
             parallel {
+
                 stage('Build Backend') {
                     steps {
                         container('jnlp') {
@@ -57,6 +64,7 @@ pipeline {
                         }
                     }
                 }
+
                 stage('Build Frontend') {
                     steps {
                         container('jnlp') {
@@ -66,6 +74,7 @@ pipeline {
                         }
                     }
                 }
+
             }
         }
 
@@ -105,38 +114,44 @@ pipeline {
         stage('Update GitOps Repo') {
             steps {
                 container('jnlp') {
+
                     dir('gitops') {
+
                         git branch: 'main',
                             credentialsId: 'github-creds',
                             url: "${GITOPS_REPO}"
-                    }
-                    withCredentials([usernamePassword(
-                        credentialsId: 'github-creds',
-                        usernameVariable: 'GITHUB_USER',
-                        passwordVariable: 'GITHUB_TOKEN'
-                    )]) {
-                        sh """
-                            if [ -z "\$GITHUB_TOKEN" ]; then
-                                echo "ERROR: GITHUB_TOKEN is empty. Check the 'jenkins-github-token' secret and the github-creds JCasC credential."
-                                exit 1
-                            fi
 
-                            sed -i 's/tag: "[^"]*"/tag: "${env.IMAGE_TAG}"/g' \
-                              gitops/apps/oneclick/helmrelease.yaml
+                        withCredentials([
+                            usernamePassword(
+                                credentialsId: 'github-creds',
+                                usernameVariable: 'GITHUB_USER',
+                                passwordVariable: 'GITHUB_TOKEN'
+                            )
+                        ]) {
 
-                            sed -i 's/tag: "[^"]*"/tag: "${env.IMAGE_TAG}"/g' \
-                              gitops/helm/oneclick/values.yaml
+                            sh """
+                                if [ -z "\$GITHUB_TOKEN" ]; then
+                                    echo "ERROR: GITHUB_TOKEN is empty."
+                                    exit 1
+                                fi
 
-                            echo "=== Updated helmrelease.yaml tags ==="
-                            grep "tag:" gitops/apps/oneclick/helmrelease.yaml
+                                sed -i 's|tag: "[^"]*"|tag: "${env.IMAGE_TAG}"|g' apps/oneclick/helmrelease.yaml
 
-                            cd gitops
-                            git config user.email "vaishjp2005@gmail.com"
-                            git config user.name "Jenkins"
-                            git add apps/oneclick/helmrelease.yaml helm/oneclick/values.yaml
-                            git commit -m "chore: deploy ${env.IMAGE_TAG}" || echo "Nothing to commit"
-                            git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/vaishjp/oneclick-gitops.git main
-                        """
+                                sed -i 's|tag: "[^"]*"|tag: "${env.IMAGE_TAG}"|g' helm/oneclick/values.yaml
+
+                                echo "=== Updated tags ==="
+                                grep "tag:" apps/oneclick/helmrelease.yaml
+
+                                git config user.email "vaishjp2005@gmail.com"
+                                git config user.name "Jenkins"
+
+                                git add apps/oneclick/helmrelease.yaml helm/oneclick/values.yaml
+
+                                git commit -m "chore: deploy ${env.IMAGE_TAG}" || echo "Nothing to commit"
+
+                                git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/vaishjp/oneclick-gitops.git main
+                            """
+                        }
                     }
                 }
             }
@@ -147,14 +162,18 @@ pipeline {
                 container('jnlp') {
                     sh """
                         aws eks update-kubeconfig --name oneclick-cluster --region ap-south-1
+
                         echo "Polling FluxCD HelmRelease status..."
+
                         TIMEOUT=300
                         INTERVAL=15
                         ELAPSED=0
 
                         while [ \$ELAPSED -lt \$TIMEOUT ]; do
+
                             STATUS=\$(kubectl get helmrelease oneclick -n default \
                                 -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Unknown")
+
                             echo "HelmRelease status: \$STATUS (elapsed: \${ELAPSED}s)"
 
                             if [ "\$STATUS" = "True" ]; then
@@ -164,23 +183,30 @@ pipeline {
 
                             sleep \$INTERVAL
                             ELAPSED=\$((ELAPSED + INTERVAL))
+
                         done
 
                         echo "ERROR: HelmRelease did not become Ready within 5 minutes."
+
                         kubectl describe helmrelease oneclick -n default || true
+
                         exit 1
                     """
                 }
             }
         }
+
     }
 
     post {
+
         success {
             echo "Pipeline succeeded. Image ${env.IMAGE_TAG} is confirmed running in the cluster."
         }
+
         failure {
             echo "Pipeline FAILED. Image ${env.IMAGE_TAG} was NOT deployed."
         }
+
     }
 }

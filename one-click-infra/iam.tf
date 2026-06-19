@@ -277,3 +277,23 @@ resource "aws_iam_role_policy_attachment" "github_actions_ecr_attach" {
   role       = aws_iam_role.github_actions_ecr.name
   policy_arn = aws_iam_policy.jenkins_ecr.arn
 }
+resource "aws_iam_policy" "jenkins_secretsmanager" {
+  name = "oneclick-jenkins-secretsmanager"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ]
+      Resource = "arn:aws:secretsmanager:${var.region}:*:secret:oneclick/github-pat*"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_secretsmanager_attach" {
+  role       = aws_iam_role.jenkins_irsa.name
+  policy_arn = aws_iam_policy.jenkins_secretsmanager.arn
+}

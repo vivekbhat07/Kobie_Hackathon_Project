@@ -94,3 +94,9 @@ variable "gitops_path" {
   type    = string
   default = "./clusters/my-cluster"
 }
+
+variable "github_pat" {
+  description = "GitHub PAT for Jenkins GitOps pushes — pass via TF_VAR_github_pat env var, never commit"
+  type        = string
+  sensitive   = true
+}
