@@ -16,10 +16,11 @@ pipeline {
                 checkout scm
                 container('jnlp') {
                     script {
-                        env.IMAGE_TAG = sh(
+                        def shortSha = sh(
                             script: 'git rev-parse --short HEAD',
                             returnStdout: true
                         ).trim()
+                        env.IMAGE_TAG = "${shortSha}-${env.BUILD_NUMBER}"
                         echo "Image tag: ${env.IMAGE_TAG}"
                     }
                 }
@@ -99,10 +100,6 @@ pipeline {
                         aws ecr get-login-password --region ${AWS_REGION} | \
                         docker login --username AWS --password-stdin \
                         ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-
-                        for repo in backend frontend; do
-                            aws ecr batch-delete-image --repository-name \$repo --region ${AWS_REGION} --image-ids imageTag=${env.IMAGE_TAG} >/dev/null 2>&1 || true
-                        done
 
                         docker push ${BACKEND_REPO}:${env.IMAGE_TAG}
                         docker push ${FRONTEND_REPO}:${env.IMAGE_TAG}
