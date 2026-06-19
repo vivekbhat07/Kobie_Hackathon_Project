@@ -37,7 +37,7 @@ RUN curl -fL -o /usr/local/bin/kubectl \
 
 # ---- Trivy (direct release asset, pinned, verbose on failure) ----
 RUN curl -fL -o /tmp/trivy.tar.gz \
-    "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" && \
+    "https://github.com/aquasecurity/trivy/releases/latest/download/trivy_$(curl -fsSL https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')_Linux-64bit.tar.gz" && \
     tar -zxf /tmp/trivy.tar.gz -C /usr/local/bin trivy && \
     rm -f /tmp/trivy.tar.gz && \
     trivy --version
