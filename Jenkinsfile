@@ -216,23 +216,21 @@ pipeline {
             steps {
                 container('jnlp') {
                     sh '''
-                        echo "=== k8sgpt version ==="
-                        k8sgpt version
+                        echo "=== Direct Bedrock test from Jenkins pod ==="
 
-                        echo "=== k8sgpt auth add --backend amazonbedrock --help ==="
-                        k8sgpt auth add --backend amazonbedrock --help || true
+                        aws sts get-caller-identity
 
-                        echo "=== Attempting auth with claude-3-sonnet ==="
-                        k8sgpt auth add \
-                          --backend amazonbedrock \
-                          --model anthropic.claude-3-sonnet-20240229-v1:0 \
-                          --providerRegion ap-south-1 || true
+                        aws bedrock-runtime invoke-model \
+                            --region ap-south-1 \
+                            --model-id anthropic.claude-3-sonnet-20240229-v1:0 \
+                            --body '{"anthropic_version":"bedrock-2023-05-31","max_tokens":10,"messages":[{"role":"user","content":"hi"}]}' \
+                            --cli-binary-format raw-in-base64-out \
+                            /tmp/bedrock-test.json 2>&1 || echo "DIRECT CALL FAILED"
 
-                        echo "=== Running analyze (non-fatal, diagnostic only) ==="
-                        k8sgpt analyze --explain --backend amazonbedrock -o json > k8sgpt-report.json || echo "analyze failed, see above"
-                        k8sgpt analyze --explain --backend amazonbedrock || echo "analyze failed, see above"
+                        echo "=== Result ==="
+
+                        cat /tmp/bedrock-test.json 2>/dev/null || echo "no output file"
                     '''
-                    archiveArtifacts artifacts: 'k8sgpt-report.json', allowEmptyArchive: true
                 }
             }
         }
