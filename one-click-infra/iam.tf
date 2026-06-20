@@ -363,3 +363,26 @@ resource "aws_iam_role_policy_attachment" "jenkins_readonly" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
+resource "aws_iam_policy" "jenkins_secretsmanager_readall" {
+  name = "oneclick-jenkins-secretsmanager-readall"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:GetResourcePolicy"
+        ]
+        Resource = "arn:aws:secretsmanager:ap-south-1:155734788051:secret:oneclick/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_secretsmanager_readall_attach" {
+  role       = aws_iam_role.jenkins_irsa.name
+  policy_arn = aws_iam_policy.jenkins_secretsmanager_readall.arn
+}
