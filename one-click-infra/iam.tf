@@ -325,7 +325,7 @@ resource "aws_iam_policy" "jenkins_secretsmanager" {
         "secretsmanager:GetSecretValue",
         "secretsmanager:DescribeSecret"
       ]
-      Resource = "arn:aws:secretsmanager:ap-south-1:*:secret:oneclick/github-pat*"
+      Resource = ["arn:aws:secretsmanager:ap-south-1:*:secret:oneclick/github-pat*", "arn:aws:secretsmanager:ap-south-1:*:secret:oneclick/groq-key*"]
     }]
   })
 }

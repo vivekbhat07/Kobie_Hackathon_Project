@@ -1,5 +1,7 @@
 pipeline {
-    agent { label 'dind-agent' }
+    agent {
+        label 'dind-agent'
+    }
 
     environment {
         AWS_REGION     = 'ap-south-1'
@@ -14,6 +16,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+
                 container('jnlp') {
                     sh '''
                         echo "Waiting for Docker daemon..."
@@ -26,12 +29,15 @@ pipeline {
                             sleep 2
                         done
                     '''
+
                     script {
                         def shortSha = sh(
                             script: 'git rev-parse --short HEAD',
                             returnStdout: true
                         ).trim()
+
                         env.IMAGE_TAG = "${shortSha}-${env.BUILD_NUMBER}"
+
                         echo "Image tag: ${env.IMAGE_TAG}"
                     }
                 }
@@ -209,29 +215,40 @@ pipeline {
         stage('K8sGPT Analysis') {
             steps {
                 container('jnlp') {
-                    sh '''
-                        echo "=== Fetching OpenAI key from Secrets Manager ==="
-                        OPENAI_API_KEY=$(aws secretsmanager get-secret-value \
-                            --secret-id oneclick/openai-key \
-                            --region ap-south-1 \
-                            --query SecretString --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['key'])")
 
-                        if [ -z "$OPENAI_API_KEY" ]; then
-                            echo "ERROR: Could not fetch OPENAI_API_KEY from Secrets Manager."
+                    sh '''
+                        echo "=== Fetching Groq key from Secrets Manager ==="
+
+                        GROQ_API_KEY=$(aws secretsmanager get-secret-value \
+                            --secret-id oneclick/groq-key \
+                            --region ap-south-1 \
+                            --query SecretString \
+                            --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['key'])")
+
+                        if [ -z "$GROQ_API_KEY" ]; then
+                            echo "ERROR: Could not fetch GROQ_API_KEY from Secrets Manager."
                             exit 1
                         fi
 
-                        echo "=== Configuring k8sgpt with OpenAI ==="
+                        echo "=== Configuring k8sgpt with Groq ==="
+
                         k8sgpt auth add \
-                          --backend openai \
-                          --model gpt-4o-mini \
-                          --password "$OPENAI_API_KEY"
+                            --backend groq \
+                            --model llama-3.3-70b-versatile \
+                            --password "$GROQ_API_KEY"
 
                         echo "=== Running analyze ==="
-                        k8sgpt analyze --explain --backend openai -o json > k8sgpt-report.json || echo "analyze failed, see above"
-                        k8sgpt analyze --explain --backend openai || echo "analyze failed, see above"
+
+                        k8sgpt analyze --explain --backend groq -o json > k8sgpt-report.json || echo "analyze failed, see above"
+
+                        k8sgpt analyze --explain --backend groq || echo "analyze failed, see above"
                     '''
-                    archiveArtifacts artifacts: 'k8sgpt-report.json', allowEmptyArchive: true
+
+                    archiveArtifacts(
+                        artifacts: 'k8sgpt-report.json',
+                        allowEmptyArchive: true
+                    )
+
                 }
             }
         }
