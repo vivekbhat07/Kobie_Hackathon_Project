@@ -221,7 +221,6 @@ pipeline {
                           --model anthropic.claude-3-5-sonnet-20241022-v2:0 \
                           --providerRegion ap-south-1
 
-                        k8sgpt generate -b amazonbedrock || true
 
                         k8sgpt analyze --explain -o json > k8sgpt-report.json || true
                         k8sgpt analyze --explain
