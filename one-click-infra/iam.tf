@@ -411,3 +411,26 @@ resource "aws_iam_role_policy_attachment" "jenkins_bedrock_attach" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = aws_iam_policy.jenkins_bedrock.arn
 }
+
+resource "aws_iam_policy" "jenkins_bedrock" {
+  name = "oneclick-jenkins-bedrock"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream"
+        ]
+        Resource = "arn:aws:bedrock:ap-south-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_bedrock_attach" {
+  role       = aws_iam_role.jenkins_irsa.name
+  policy_arn = aws_iam_policy.jenkins_bedrock.arn
+}
