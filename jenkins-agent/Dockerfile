@@ -35,6 +35,14 @@ RUN curl -fL -o /usr/local/bin/kubectl \
     chmod +x /usr/local/bin/kubectl && \
     kubectl version --client
 
+# ---- Terraform (pinned version) ----
+ARG TERRAFORM_VERSION=1.15.6
+RUN curl -fL -o /tmp/terraform.zip \
+    "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" && \
+    unzip -q /tmp/terraform.zip -d /usr/local/bin && \
+    rm -f /tmp/terraform.zip && \
+    terraform -version
+
 # ---- Trivy (direct release asset, pinned, verbose on failure) ----
 RUN curl -fL -o /tmp/trivy.tar.gz \
     "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" && \
