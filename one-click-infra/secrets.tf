@@ -20,3 +20,19 @@ resource "aws_secretsmanager_secret_version" "jenkins_admin" {
     password = var.jenkins_admin_password
   })
 }
+variable "openai_api_key" {
+  type      = string
+  sensitive = true
+}
+
+resource "aws_secretsmanager_secret" "openai_key" {
+  name                    = "oneclick/openai-key"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "openai_key" {
+  secret_id = aws_secretsmanager_secret.openai_key.id
+  secret_string = jsonencode({
+    key = var.openai_api_key
+  })
+}
