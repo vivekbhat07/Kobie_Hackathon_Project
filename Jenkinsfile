@@ -216,14 +216,21 @@ pipeline {
             steps {
                 container('jnlp') {
                     sh '''
+                        echo "=== k8sgpt version ==="
+                        k8sgpt version
+
+                        echo "=== k8sgpt auth add --backend amazonbedrock --help ==="
+                        k8sgpt auth add --backend amazonbedrock --help || true
+
+                        echo "=== Attempting auth with claude-3-sonnet ==="
                         k8sgpt auth add \
                           --backend amazonbedrock \
                           --model anthropic.claude-3-sonnet-20240229-v1:0 \
-                          --providerRegion ap-south-1
+                          --providerRegion ap-south-1 || true
 
-
-                        k8sgpt analyze --explain --backend amazonbedrock -o json > k8sgpt-report.json || true
-                        k8sgpt analyze --explain --backend amazonbedrock
+                        echo "=== Running analyze (non-fatal, diagnostic only) ==="
+                        k8sgpt analyze --explain --backend amazonbedrock -o json > k8sgpt-report.json || echo "analyze failed, see above"
+                        k8sgpt analyze --explain --backend amazonbedrock || echo "analyze failed, see above"
                     '''
                     archiveArtifacts artifacts: 'k8sgpt-report.json', allowEmptyArchive: true
                 }
