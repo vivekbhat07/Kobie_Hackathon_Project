@@ -1,5 +1,7 @@
 pipeline {
-    agent { label 'dind-agent' }
+    agent {
+        label 'dind-agent'
+    }
 
     environment {
         AWS_REGION     = 'ap-south-1'
@@ -9,32 +11,38 @@ pipeline {
         GITOPS_REPO    = 'https://github.com/vaishjp/oneclick-gitops.git'
     }
 
-    stage('Checkout') {
-    steps {
-        checkout scm
-        container('jnlp') {
-            sh '''
-                echo "Waiting for Docker daemon..."
-                for i in $(seq 1 30); do
-                    if docker info >/dev/null 2>&1; then
-                        echo "Docker daemon ready."
-                        break
-                    fi
-                    echo "Docker not ready yet (attempt $i/30)..."
-                    sleep 2
-                done
-            '''
-            script {
-                def shortSha = sh(
-                    script: 'git rev-parse --short HEAD',
-                    returnStdout: true
-                ).trim()
-                env.IMAGE_TAG = "${shortSha}-${env.BUILD_NUMBER}"
-                echo "Image tag: ${env.IMAGE_TAG}"
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+
+                container('jnlp') {
+                    sh '''
+                        echo "Waiting for Docker daemon..."
+                        for i in $(seq 1 30); do
+                            if docker info >/dev/null 2>&1; then
+                                echo "Docker daemon ready."
+                                break
+                            fi
+                            echo "Docker not ready yet (attempt $i/30)..."
+                            sleep 2
+                        done
+                    '''
+
+                    script {
+                        def shortSha = sh(
+                            script: 'git rev-parse --short HEAD',
+                            returnStdout: true
+                        ).trim()
+
+                        env.IMAGE_TAG = "${shortSha}-${env.BUILD_NUMBER}"
+
+                        echo "Image tag: ${env.IMAGE_TAG}"
+                    }
+                }
             }
         }
-    }
-}
 
         stage('Test') {
             parallel {
@@ -123,9 +131,11 @@ pipeline {
 
                     dir('gitops') {
 
-                        git branch: 'main',
+                        git(
+                            branch: 'main',
                             credentialsId: 'github-creds',
                             url: "${GITOPS_REPO}"
+                        )
 
                         withCredentials([
                             usernamePassword(
