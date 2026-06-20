@@ -222,8 +222,8 @@ pipeline {
                           --providerRegion ap-south-1
 
 
-                        k8sgpt analyze --explain -o json > k8sgpt-report.json || true
-                        k8sgpt analyze --explain
+                        k8sgpt analyze --explain --backend amazonbedrock -o json > k8sgpt-report.json || true
+                        k8sgpt analyze --explain --backend amazonbedrock
                     '''
                     archiveArtifacts artifacts: 'k8sgpt-report.json', allowEmptyArchive: true
                 }
