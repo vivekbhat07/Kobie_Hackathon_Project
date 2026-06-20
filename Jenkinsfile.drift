@@ -26,6 +26,14 @@ pipeline {
                             echo "Initializing Terraform..."
                             terraform init -reconfigure
 
+                            echo "Checking for stale locks..."
+                            LOCK_ID=$(terraform plan -detailed-exitcode -out=drift.tfplan 2>&1 | grep -oP '(?<=ID:        ).*' | head -1 || true)
+                            if [ -n "$LOCK_ID" ]; then
+                                echo "Stale lock detected: $LOCK_ID — force unlocking..."
+                                terraform force-unlock -force "$LOCK_ID" || true
+                            fi
+                            
+
                             echo "Running drift detection..."
                             set +e
                             terraform plan -detailed-exitcode -out=drift.tfplan > drift-report.txt 2>&1

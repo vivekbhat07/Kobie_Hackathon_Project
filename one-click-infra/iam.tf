@@ -313,6 +313,7 @@ resource "aws_iam_role_policy_attachment" "github_actions_ecr_attach" {
   role       = aws_iam_role.github_actions_ecr.name
   policy_arn = aws_iam_policy.jenkins_ecr.arn
 }
+
 resource "aws_iam_policy" "jenkins_secretsmanager" {
   name = "oneclick-jenkins-secretsmanager"
 
@@ -333,6 +334,7 @@ resource "aws_iam_role_policy_attachment" "jenkins_secretsmanager_attach" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = aws_iam_policy.jenkins_secretsmanager.arn
 }
+
 resource "aws_iam_policy" "jenkins_tfstate" {
   name = "oneclick-jenkins-tfstate"
 
@@ -344,6 +346,7 @@ resource "aws_iam_policy" "jenkins_tfstate" {
         Action = [
           "s3:GetObject",
           "s3:PutObject",
+          "s3:DeleteObject",
           "s3:ListBucket"
         ]
         Resource = [
@@ -359,10 +362,12 @@ resource "aws_iam_role_policy_attachment" "jenkins_tfstate_attach" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = aws_iam_policy.jenkins_tfstate.arn
 }
+
 resource "aws_iam_role_policy_attachment" "jenkins_readonly" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
+
 resource "aws_iam_policy" "jenkins_secretsmanager_readall" {
   name = "oneclick-jenkins-secretsmanager-readall"
 
@@ -385,4 +390,24 @@ resource "aws_iam_policy" "jenkins_secretsmanager_readall" {
 resource "aws_iam_role_policy_attachment" "jenkins_secretsmanager_readall_attach" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = aws_iam_policy.jenkins_secretsmanager_readall.arn
+}
+
+resource "aws_iam_policy" "jenkins_bedrock" {
+  name = "oneclick-jenkins-bedrock"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "bedrock:InvokeModel"
+      ]
+      Resource = "arn:aws:bedrock:${var.region}::foundation-model/*"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_bedrock_attach" {
+  role       = aws_iam_role.jenkins_irsa.name
+  policy_arn = aws_iam_policy.jenkins_bedrock.arn
 }
