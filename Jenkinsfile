@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'dind-agent'
-    }
+    agent { label 'dind-agent' }
 
     environment {
         AWS_REGION     = 'ap-south-1'
@@ -16,7 +14,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-
                 container('jnlp') {
                     sh '''
                         echo "Waiting for Docker daemon..."
@@ -29,15 +26,12 @@ pipeline {
                             sleep 2
                         done
                     '''
-
                     script {
                         def shortSha = sh(
                             script: 'git rev-parse --short HEAD',
                             returnStdout: true
                         ).trim()
-
                         env.IMAGE_TAG = "${shortSha}-${env.BUILD_NUMBER}"
-
                         echo "Image tag: ${env.IMAGE_TAG}"
                     }
                 }
@@ -216,21 +210,28 @@ pipeline {
             steps {
                 container('jnlp') {
                     sh '''
-                        echo "=== Direct Bedrock test from Jenkins pod ==="
-
-                        aws sts get-caller-identity
-
-                        aws bedrock-runtime invoke-model \
+                        echo "=== Fetching OpenAI key from Secrets Manager ==="
+                        OPENAI_API_KEY=$(aws secretsmanager get-secret-value \
+                            --secret-id oneclick/openai-key \
                             --region ap-south-1 \
-                            --model-id anthropic.claude-3-sonnet-20240229-v1:0 \
-                            --body '{"anthropic_version":"bedrock-2023-05-31","max_tokens":10,"messages":[{"role":"user","content":"hi"}]}' \
-                            --cli-binary-format raw-in-base64-out \
-                            /tmp/bedrock-test.json 2>&1 || echo "DIRECT CALL FAILED"
+                            --query SecretString --output text)
 
-                        echo "=== Result ==="
+                        if [ -z "$OPENAI_API_KEY" ]; then
+                            echo "ERROR: Could not fetch OPENAI_API_KEY from Secrets Manager."
+                            exit 1
+                        fi
 
-                        cat /tmp/bedrock-test.json 2>/dev/null || echo "no output file"
+                        echo "=== Configuring k8sgpt with OpenAI ==="
+                        k8sgpt auth add \
+                          --backend openai \
+                          --model gpt-4o-mini \
+                          --password "$OPENAI_API_KEY"
+
+                        echo "=== Running analyze ==="
+                        k8sgpt analyze --explain --backend openai -o json > k8sgpt-report.json || echo "analyze failed, see above"
+                        k8sgpt analyze --explain --backend openai || echo "analyze failed, see above"
                     '''
+                    archiveArtifacts artifacts: 'k8sgpt-report.json', allowEmptyArchive: true
                 }
             }
         }
