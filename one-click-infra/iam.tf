@@ -333,3 +333,29 @@ resource "aws_iam_role_policy_attachment" "jenkins_secretsmanager_attach" {
   role       = aws_iam_role.jenkins_irsa.name
   policy_arn = aws_iam_policy.jenkins_secretsmanager.arn
 }
+resource "aws_iam_policy" "jenkins_tfstate" {
+  name = "oneclick-jenkins-tfstate"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::oneclick-tfstate-155734788051",
+          "arn:aws:s3:::oneclick-tfstate-155734788051/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_tfstate_attach" {
+  role       = aws_iam_role.jenkins_irsa.name
+  policy_arn = aws_iam_policy.jenkins_tfstate.arn
+}
