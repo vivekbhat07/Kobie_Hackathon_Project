@@ -218,7 +218,7 @@ pipeline {
                     sh '''
                         k8sgpt auth add \
                           --backend amazonbedrock \
-                          --model anthropic.claude-3-5-sonnet-20241022-v1:0 \
+                          --model anthropic.claude-3-sonnet-20240229-v1:0 \
                           --providerRegion ap-south-1
 
 
