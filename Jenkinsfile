@@ -214,7 +214,7 @@ pipeline {
                         OPENAI_API_KEY=$(aws secretsmanager get-secret-value \
                             --secret-id oneclick/openai-key \
                             --region ap-south-1 \
-                            --query SecretString --output text)
+                            --query SecretString --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['key'])")
 
                         if [ -z "$OPENAI_API_KEY" ]; then
                             echo "ERROR: Could not fetch OPENAI_API_KEY from Secrets Manager."
