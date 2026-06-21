@@ -47,11 +47,5 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/* && \
     node --version
-# ---- K8sGPT (pinned version, direct release asset) ----
-RUN curl -fL -o /tmp/k8sgpt.tar.gz \
-    "https://github.com/k8sgpt-ai/k8sgpt/releases/download/v${K8SGPT_VERSION}/k8sgpt_Linux_x86_64.tar.gz" && \
-    tar -xzf /tmp/k8sgpt.tar.gz -C /usr/local/bin k8sgpt && \
-    rm -f /tmp/k8sgpt.tar.gz && \
-    chmod +x /usr/local/bin/k8sgpt && \
-    k8sgpt version
+
 USER jenkins
