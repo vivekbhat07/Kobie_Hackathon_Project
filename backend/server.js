@@ -69,3 +69,4 @@ app.get("/metrics", async (req, res) => {
 app.listen(3001, () => {
   console.log("Server running on port 3001");
 });"// demo trigger $(Get-Date)" 
+"// hdemo trigger $(Get-Date)" 
