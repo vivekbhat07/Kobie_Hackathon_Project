@@ -212,48 +212,6 @@ pipeline {
             }
         }
 
-        stage('K8sGPT Analysis') {
-            steps {
-                container('jnlp') {
-
-                    sh '''
-                        echo "=== Fetching Groq key from Secrets Manager ==="
-
-                        GROQ_API_KEY=$(aws secretsmanager get-secret-value \
-                            --secret-id oneclick/groq-key \
-                            --region ap-south-1 \
-                            --query SecretString \
-                            --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['key'])")
-
-                        if [ -z "$GROQ_API_KEY" ]; then
-                            echo "ERROR: Could not fetch GROQ_API_KEY from Secrets Manager."
-                            exit 1
-                        fi
-
-                        echo "=== Configuring k8sgpt with Groq ==="
-
-                        k8sgpt auth add \
-                            --backend groq \
-                            --model llama-3.3-70b-versatile \
-                            --password "$GROQ_API_KEY"
-
-                        echo "=== Running analyze ==="
-
-                        k8sgpt analyze --explain --backend groq -o json > k8sgpt-report.json || echo "analyze failed, see above"
-
-                        k8sgpt analyze --explain --backend groq || echo "analyze failed, see above"
-                    '''
-
-                    archiveArtifacts(
-                        artifacts: 'k8sgpt-report.json',
-                        allowEmptyArchive: true
-                    )
-
-                }
-            }
-        }
-
-    }
 
     post {
 

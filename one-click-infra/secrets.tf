@@ -18,17 +18,3 @@ resource "aws_secretsmanager_secret_version" "jenkins_admin" {
     password = var.jenkins_admin_password
   })
 }
-variable "groq_api_key" {
-  type      = string
-  sensitive = true
-}
-resource "aws_secretsmanager_secret" "groq_key" {
-  name                    = "oneclick/groq-key"
-  recovery_window_in_days = 0
-}
-resource "aws_secretsmanager_secret_version" "groq_key" {
-  secret_id = aws_secretsmanager_secret.groq_key.id
-  secret_string = jsonencode({
-    key = var.groq_api_key
-  })
-}
