@@ -18,3 +18,19 @@ resource "aws_secretsmanager_secret_version" "jenkins_admin" {
     password = var.jenkins_admin_password
   })
 }
+variable "grafana_password" {
+  type      = string
+  sensitive = true
+}
+
+resource "aws_secretsmanager_secret" "grafana_password" {
+  name                    = "oneclick/grafana-password"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "grafana_password" {
+  secret_id     = aws_secretsmanager_secret.grafana_password.id
+  secret_string = jsonencode({
+    password = var.grafana_password
+  })
+}
