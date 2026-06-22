@@ -50,7 +50,7 @@ RUN curl -fL -o /tmp/trivy.tar.gz \
 
 # ---- K8sGPT ----
 RUN curl -fL -o /tmp/k8sgpt.tar.gz \
-    "https://github.com/k8sgpt-ai/k8sgpt/releases/download/v${K8SGPT_VERSION}/k8sgpt_linux_amd64.tar.gz" && \
+    "https://github.com/k8sgpt-ai/k8sgpt/releases/download/v${K8SGPT_VERSION}/k8sgpt_Linux_x86_64.tar.gz" && \
     tar -zxf /tmp/k8sgpt.tar.gz -C /usr/local/bin k8sgpt && \
     rm -f /tmp/k8sgpt.tar.gz && \
     k8sgpt version
