@@ -18,12 +18,12 @@ pipeline {
 
                         echo ""
                         echo "╔══════════════════════════════════════════════════════════════════╗"
-                        echo "║          🤖 K8sGPT AI DIAGNOSTICS — ONE-CLICK-OPS                ║"
+                        echo "║           K8sGPT AI DIAGNOSTICS — ONE-CLICK-OPS                ║"
                         echo "║         Self-hosted Ollama · llama3.2:1b · Zero API Cost          ║"
                         echo "╚══════════════════════════════════════════════════════════════════╝"
                         echo ""
-                        echo "  🔍 Namespace : ''' + params.NAMESPACE + '''"
-                        echo "  🎯 Deployment: ''' + (params.DEPLOYMENT ?: 'ALL') + '''"
+                        echo "   Namespace : ''' + params.NAMESPACE + '''"
+                        echo "   Deployment: ''' + (params.DEPLOYMENT ?: 'ALL') + '''"
                         echo ""
 
                         if [ -n "''' + params.DEPLOYMENT + '''" ]; then
