@@ -47,6 +47,9 @@ RUN curl -fL -o /tmp/trivy.tar.gz \
     tar -zxf /tmp/trivy.tar.gz -C /usr/local/bin trivy && \
     rm -f /tmp/trivy.tar.gz && \
     trivy --version
+# ---- Infracost ----
+RUN curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh && \
+    infracost --version
 
 # ---- K8sGPT ----
 RUN curl -fL -o /tmp/k8sgpt.tar.gz \

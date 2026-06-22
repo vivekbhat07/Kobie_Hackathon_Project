@@ -1,3 +1,4 @@
+```groovy
 pipeline {
     agent {
         label 'dind-agent'
@@ -39,6 +40,37 @@ pipeline {
                         env.IMAGE_TAG = "${shortSha}-${env.BUILD_NUMBER}"
 
                         echo "Image tag: ${env.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Infracost') {
+            steps {
+                container('jnlp') {
+                    withCredentials([
+                        string(credentialsId: 'infracost-api-key',
+                               variable: 'INFRACOST_API_KEY')
+                    ]) {
+                        dir('one-click-infra') {
+                            sh '''
+                                infracost breakdown --path . \
+                                  --terraform-var="github_pat=dummy" \
+                                  --terraform-var="db_username=postgres" \
+                                  --terraform-var="db_password=dummy" \
+                                  --terraform-var="jenkins_admin_password=dummy" \
+                                  --terraform-var="groq_api_key=dummy" \
+                                  --format=table \
+                                  --out-file=/tmp/infracost.txt || true
+
+                                cat /tmp/infracost.txt
+                            '''
+
+                            archiveArtifacts(
+                                artifacts: '/tmp/infracost.txt',
+                                allowEmptyArchive: true
+                            )
+                        }
                     }
                 }
             }
@@ -100,6 +132,8 @@ pipeline {
             steps {
                 container('jnlp') {
                     sh """
+                        export PATH=/shared-bin:\$PATH
+
                         echo "Scanning backend image for CRITICAL vulnerabilities..."
                         trivy image --exit-code 1 --severity CRITICAL --no-progress ${BACKEND_REPO}:${env.IMAGE_TAG}
 
@@ -114,6 +148,8 @@ pipeline {
             steps {
                 container('jnlp') {
                     sh """
+                        export PATH=/shared-bin:\$PATH
+
                         aws ecr get-login-password --region ${AWS_REGION} | \
                         docker login --username AWS --password-stdin \
                         ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
@@ -177,6 +213,8 @@ pipeline {
             steps {
                 container('jnlp') {
                     sh """
+                        export PATH=/shared-bin:\$PATH
+
                         aws eks update-kubeconfig --name oneclick-cluster --region ap-south-1
 
                         echo "Polling FluxCD HelmRelease status..."
@@ -226,3 +264,4 @@ pipeline {
 
     }
 }
+```
