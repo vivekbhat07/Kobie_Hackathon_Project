@@ -1,0 +1,64 @@
+pipeline {
+    agent {
+        label 'dind-agent'
+    }
+
+    parameters {
+        string(name: 'NAMESPACE', defaultValue: 'default', description: 'Kubernetes namespace to analyze')
+        string(name: 'DEPLOYMENT', defaultValue: '', description: 'Deployment name to filter (leave empty for all)')
+    }
+
+    stages {
+
+        stage('K8sGPT Analysis') {
+            steps {
+                container('jnlp') {
+                    sh '''
+                        aws eks update-kubeconfig --name oneclick-cluster --region ap-south-1
+
+                        echo ""
+                        echo "╔══════════════════════════════════════════════════════════════════╗"
+                        echo "║          🤖 K8sGPT AI DIAGNOSTICS — ONE-CLICK-OPS                ║"
+                        echo "║         Self-hosted Ollama · llama3.2:1b · Zero API Cost          ║"
+                        echo "╚══════════════════════════════════════════════════════════════════╝"
+                        echo ""
+                        echo "  🔍 Namespace : ''' + params.NAMESPACE + '''"
+                        echo "  🎯 Deployment: ''' + (params.DEPLOYMENT ?: 'ALL') + '''"
+                        echo ""
+
+                        if [ -n "''' + params.DEPLOYMENT + '''" ]; then
+                            kubectl exec -n jenkins deploy/k8sgpt -- k8sgpt analyze \
+                                --namespace "''' + params.NAMESPACE + '''" \
+                                --filter Deployment \
+                                --explain \
+                                --backend ollama | grep -A 20 "''' + params.DEPLOYMENT + '''" || \
+                            kubectl exec -n jenkins deploy/k8sgpt -- k8sgpt analyze \
+                                --namespace "''' + params.NAMESPACE + '''" \
+                                --explain \
+                                --backend ollama
+                        else
+                            kubectl exec -n jenkins deploy/k8sgpt -- k8sgpt analyze \
+                                --namespace "''' + params.NAMESPACE + '''" \
+                                --explain \
+                                --backend ollama
+                        fi
+
+                        echo ""
+                        echo "  ✅ Analysis complete — powered by Ollama in-cluster"
+                        echo ""
+                    '''
+                }
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo "K8sGPT analysis completed successfully."
+        }
+        failure {
+            echo "K8sGPT analysis failed — check Ollama pod status in jenkins namespace."
+        }
+    }
+}
