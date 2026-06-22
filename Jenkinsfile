@@ -45,6 +45,8 @@ pipeline {
                 container('jnlp') {
                     dir('one-click-infra') {
                         sh '''
+                            export INFRACOST_API_KEY=$(kubectl get secret jenkins-infracost-secret -n jenkins -o jsonpath='{.data.key}' | base64 -d)
+
                             infracost breakdown --path . \
                               --terraform-var="github_pat=dummy" \
                               --terraform-var="db_username=postgres" \
