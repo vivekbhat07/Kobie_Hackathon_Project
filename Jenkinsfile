@@ -45,7 +45,14 @@ pipeline {
                 container('jnlp') {
                     dir('one-click-infra') {
                         sh '''
-                            export INFRACOST_API_KEY=$(kubectl get secret jenkins-infracost-secret -n jenkins -o jsonpath='{.data.key}' | base64 -d)
+                            INFRACOST_API_KEY=$(kubectl get secret jenkins-infracost-secret -n jenkins -o jsonpath='{.data.key}' 2>/dev/null | base64 -d 2>/dev/null) || true
+
+                            if [ -z "$INFRACOST_API_KEY" ]; then
+                            echo "WARNING: Could not fetch Infracost API key, skipping cost estimate."
+                            exit 0
+                            fi
+
+                            export INFRACOST_API_KEY
 
                             infracost breakdown --path . \
                               --terraform-var="github_pat=dummy" \
@@ -55,9 +62,9 @@ pipeline {
                               --terraform-var="groq_api_key=dummy" \
                               --format=table \
                               --out-file=/tmp/infracost.txt || true
-                            cat /tmp/infracost.txt
-                        '''
-                        archiveArtifacts artifacts: '/tmp/infracost.txt', allowEmptyArchive: true
+                             cat /tmp/infracost.txt || true
+                         '''
+                         archiveArtifacts artifacts: '/tmp/infracost.txt', allowEmptyArchive: true
                     }
                 }
             }
