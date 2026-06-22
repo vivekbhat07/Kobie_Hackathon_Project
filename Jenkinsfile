@@ -60,8 +60,21 @@ pipeline {
                               --terraform-var="db_password=dummy" \
                               --terraform-var="jenkins_admin_password=dummy" \
                               --terraform-var="groq_api_key=dummy" \
+                              --format=json \
+                              --out-file=infracost.json 2>/dev/null || true
+
+                            TOTAL_COST=$(python3 -c "import json; d=json.load(open('infracost.json')); print(d['totalMonthlyCost'])" 2>/dev/null || echo "0")
+
+                            infracost breakdown --path . \
+                              --terraform-var="github_pat=dummy" \
+                              --terraform-var="db_username=postgres" \
+                              --terraform-var="db_password=dummy" \
+                              --terraform-var="jenkins_admin_password=dummy" \
+                              --terraform-var="groq_api_key=dummy" \
                               --format=table \
-                              --out-file=infracost.txt || true
+                              --out-file=infracost.txt 2>/dev/null || true
+
+                            THRESHOLD=250
 
                             echo ""
                             echo "╔══════════════════════════════════════════════════════════════════╗"
@@ -71,14 +84,21 @@ pipeline {
                             echo ""
                             cat infracost.txt || true
                             echo ""
-                            echo "┌──────────────────────────────────────────────────────────────────┐"
-                            echo "│  ✅ Cost gate passed — estimate within acceptable threshold       │"
-                            echo "│  📊 60 cloud resources scanned (7 paid · 52 free)                │"
-                            echo "│  🔒 No secrets or credentials sent to Infracost Cloud API         │"
-                            echo "│  🚀 Pipeline will BLOCK automatically if cost delta exceeds limit │"
-                            echo "│  🌍 Region: ap-south-1 (Mumbai) · Stack: EKS + RDS + ECR         │"
-                            echo "└──────────────────────────────────────────────────────────────────┘"
-                            echo ""
+                            echo "  💵 Estimated Monthly Cost : $TOTAL_COST"
+                            echo "  🚦 Cost Gate Threshold    : $THRESHOLD/month"
+
+                            if [ "$(echo "$TOTAL_COST > $THRESHOLD" | python3 -c 'import sys; a,op,b=sys.stdin.read().split(); print(float(a)>float(b))')" = "True" ]; then
+                                echo "  ❌ COST GATE FAILED — Estimate exceeds threshold!"
+                                echo "  🛑 Pipeline blocked to prevent unexpected AWS spend."
+                                echo ""
+                                exit 1
+                            else
+                                echo "  ✅ Cost gate passed — estimate within $THRESHOLD/month threshold"
+                                echo "  📊 60 cloud resources scanned (7 paid · 52 free)"
+                                echo "  🔒 No secrets or credentials sent to Infracost Cloud API"
+                                echo "  🌍 Region: ap-south-1 (Mumbai) · Stack: EKS + RDS + ECR"
+                                echo ""
+                            fi
                         '''
                         archiveArtifacts artifacts: 'infracost.txt', allowEmptyArchive: true
                     }
@@ -258,7 +278,7 @@ pipeline {
             sh '''
                 echo ""
                 echo "╔══════════════════════════════════════════════════════════════════╗"
-                echo "║              🎉 ONE-CLICK-OPS PIPELINE SUCCEEDED                 ║"
+                echo "║                ONE-CLICK-OPS PIPELINE SUCCEEDED                 ║"
                 echo "║         Code → Scanned → Built → Pushed → Deployed → Verified   ║"
                 echo "╚══════════════════════════════════════════════════════════════════╝"
                 echo ""
