@@ -50,7 +50,7 @@ export default function Login() {
             Sign in to AlertPortal
           </h1>
           <p className="mt-1 text-sm text-mut">
-            We'll email you a one-time code. Use a pes.edu or kobie.ai address.
+            We'll email you a one-time code. Use a pesu.pes.edu or kobie.com address.
           </p>
 
           <div className="mt-6">
@@ -64,7 +64,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="you@kobie.ai"
+              placeholder="you@kobie.com"
               className="field-input"
             />
           </div>
