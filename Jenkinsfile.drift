@@ -15,7 +15,6 @@ pipeline {
                     withCredentials([
                         string(credentialsId: 'DB_PASSWORD', variable: 'DB_PASS'),
                         string(credentialsId: 'GRAFANA_PASSWORD', variable: 'GRAFANA_PASS'),
-                        string(credentialsId: 'JENKINS_ADMIN_PASSWORD', variable: 'ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')
                     ]) {
                         dir('one-click-infra') {
