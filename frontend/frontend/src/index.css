@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-ink text-fg antialiased;
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
+  }
+}
+
+@layer components {
+  .field-label {
+    @apply mb-1.5 block font-mono text-xs uppercase tracking-wider text-mut;
+  }
+  .field-input {
+    @apply w-full rounded-lg border border-line bg-panel2 px-3 py-2.5 text-fg
+           placeholder:text-mut/60 focus:border-beacon focus:outline-none
+           focus:ring-1 focus:ring-beacon/40 transition;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5
+           font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-primary {
+    @apply btn bg-beacon text-white hover:bg-beacon/90 shadow-lg shadow-beacon/20;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-transparent text-fg hover:bg-panel2;
+  }
+  .btn-danger {
+    @apply btn border border-crit/40 bg-transparent text-crit hover:bg-crit/10;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-panel;
+  }
+}
+
+/* Kobie coral heart pulse */
+@keyframes kobie-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
