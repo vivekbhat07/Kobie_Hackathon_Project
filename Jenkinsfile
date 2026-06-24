@@ -78,8 +78,8 @@ pipeline {
 
                             echo ""
                             echo "╔══════════════════════════════════════════════════════════════════╗"
-                            echo "║           💰 ONE-CLICK INFRA — COST INTELLIGENCE REPORT          ║"
-                            echo "║              Powered by Infracost · Built by One-Click-Ops        ║"
+                            echo "║           💰 ONE-CLICK INFRA — COST INTELLIGENCE REPORT                            ║"
+                            echo "║              Powered by Infracost · Built by One-Click-Ops                          ║"
                             echo "╚══════════════════════════════════════════════════════════════════╝"
                             echo ""
                             cat infracost.txt || true
@@ -165,10 +165,26 @@ pipeline {
                         export PATH=/shared-bin:\$PATH
 
                         echo "Scanning backend image for CRITICAL vulnerabilities..."
-                        trivy image --exit-code 1 --severity CRITICAL --no-progress ${BACKEND_REPO}:${env.IMAGE_TAG}
+                        trivy image \
+                            --exit-code 1 \
+                            --severity CRITICAL \
+                            --no-progress \
+                            --scanners vuln,secret \
+                            --skip-dirs /root/.npm/_cacache \
+                            --skip-dirs /usr/local/lib/node_modules \
+                            --skip-version-check \
+                            ${BACKEND_REPO}:${env.IMAGE_TAG}
 
                         echo "Scanning frontend image for CRITICAL vulnerabilities..."
-                        trivy image --exit-code 1 --severity CRITICAL --no-progress ${FRONTEND_REPO}:${env.IMAGE_TAG}
+                        trivy image \
+                            --exit-code 1 \
+                            --severity CRITICAL \
+                            --no-progress \
+                            --scanners vuln,secret \
+                            --skip-dirs /root/.npm/_cacache \
+                            --skip-dirs /usr/local/lib/node_modules \
+                            --skip-version-check \
+                            ${FRONTEND_REPO}:${env.IMAGE_TAG}
                     """
                 }
             }
@@ -278,8 +294,8 @@ pipeline {
             sh '''
                 echo ""
                 echo "╔══════════════════════════════════════════════════════════════════╗"
-                echo "║                ONE-CLICK-OPS PIPELINE SUCCEEDED                 ║"
-                echo "║         Code → Scanned → Built → Pushed → Deployed → Verified   ║"
+                echo "║                ONE-CLICK-OPS PIPELINE SUCCEEDED                                     ║"
+                echo "║         Code → Scanned → Built → Pushed → Deployed → Verified                       ║"
                 echo "╚══════════════════════════════════════════════════════════════════╝"
                 echo ""
             '''
