@@ -11,7 +11,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "oneclick-tfstate-155734788051"
+    bucket       = "oneclick-tfstate-286836106281"
     key          = "oneclick/terraform.tfstate"
     region       = "ap-south-1"
     use_lockfile = true

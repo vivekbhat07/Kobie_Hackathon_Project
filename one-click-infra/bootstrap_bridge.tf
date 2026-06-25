@@ -29,7 +29,7 @@ resource "null_resource" "bootstrap_bridge" {
         Write-Host "FluxCD already present - reconciling."
       } else {
         Write-Host "FluxCD not found - bootstrapping."
-        flux bootstrap github --owner=vaishjp --repository=oneclick-gitops --branch=main --path=./clusters/my-cluster --personal
+        flux bootstrap github --owner=vivekbhat07 --repository=oneclick-gitops --branch=main --path=./clusters/my-cluster --personal
       }
 
       $appsKustomization = kubectl get kustomization apps -n flux-system 2>$null

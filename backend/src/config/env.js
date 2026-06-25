@@ -43,7 +43,7 @@ const config = {
 
   github: {
     token: process.env.GITHUB_TOKEN || '',
-    owner: process.env.GITHUB_OWNER || 'vaishjp',
+    owner: process.env.GITHUB_OWNER || 'vivekbhat07',
     repo: process.env.GITHUB_REPO || 'oneclick-gitops',
     branch: process.env.GITHUB_BRANCH || 'main',
     alertsDir: (process.env.GITHUB_ALERTS_DIR || 'apps/alerts').replace(/\/+$/, ''),

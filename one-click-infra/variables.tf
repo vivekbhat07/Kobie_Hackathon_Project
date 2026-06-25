@@ -77,7 +77,7 @@ variable "aws_region" {
 
 variable "github_owner" {
   type    = string
-  default = "vaishjp"
+  default = "vivekbhat07"
 }
 
 variable "gitops_repo_name" {

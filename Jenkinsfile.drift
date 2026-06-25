@@ -6,7 +6,7 @@ pipeline {
     }
     environment {
         AWS_REGION     = 'ap-south-1'
-        AWS_ACCOUNT_ID = '155734788051'
+        AWS_ACCOUNT_ID = '286836106281'
     }
     stages {
         stage('Terraform Drift Detection') {

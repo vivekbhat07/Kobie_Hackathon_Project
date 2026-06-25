@@ -5,10 +5,10 @@ pipeline {
 
     environment {
         AWS_REGION     = 'ap-south-1'
-        AWS_ACCOUNT_ID = '155734788051'
+        AWS_ACCOUNT_ID = '286836106281'
         BACKEND_REPO   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend"
         FRONTEND_REPO  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend"
-        GITOPS_REPO    = 'https://github.com/vaishjp/oneclick-gitops.git'
+        GITOPS_REPO    = 'https://github.com/vivekbhat07/oneclick-gitops.git'
     }
 
     stages {
@@ -240,7 +240,7 @@ pipeline {
 
                                 git add apps/oneclick/helmrelease.yaml helm/oneclick/values.yaml
                                 git commit -m "chore: deploy ${env.IMAGE_TAG}" || echo "Nothing to commit"
-                                git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/vaishjp/oneclick-gitops.git main
+                                git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/vivekbhat07/oneclick-gitops.git main
                             """
                         }
                     }

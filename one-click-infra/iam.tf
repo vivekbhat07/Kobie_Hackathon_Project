@@ -302,7 +302,7 @@ resource "aws_iam_role" "github_actions_ecr" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:vaishjp/Kobie_Hackathon_Project:*"
+          "token.actions.githubusercontent.com:sub" = "repo:vivekbhat07/Kobie_Hackathon_Project:*"
         }
       }
     }]
@@ -350,8 +350,8 @@ resource "aws_iam_policy" "jenkins_tfstate" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::oneclick-tfstate-155734788051",
-          "arn:aws:s3:::oneclick-tfstate-155734788051/*"
+          "arn:aws:s3:::oneclick-tfstate-286836106281",
+          "arn:aws:s3:::oneclick-tfstate-286836106281/*"
         ]
       }
     ]
@@ -381,7 +381,7 @@ resource "aws_iam_policy" "jenkins_secretsmanager_readall" {
           "secretsmanager:DescribeSecret",
           "secretsmanager:GetResourcePolicy"
         ]
-        Resource = "arn:aws:secretsmanager:ap-south-1:155734788051:secret:oneclick/*"
+        Resource = "arn:aws:secretsmanager:ap-south-1:286836106281:secret:oneclick/*"
       }
     ]
   })
