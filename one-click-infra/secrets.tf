@@ -34,3 +34,15 @@ resource "aws_secretsmanager_secret_version" "grafana_password" {
     password = var.grafana_password
   })
 }
+
+resource "aws_secretsmanager_secret" "infracost_api" {
+  name                    = "oneclick/infracost-api-key"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "infracost_api" {
+  secret_id     = aws_secretsmanager_secret.infracost_api.id   # ← need .id
+  secret_string = jsonencode({                                  # ← jsonencode not jsondecode
+    password = "ico-6MABJGZ3wSdAW4pdkxixQVR7hnpRubVZ"         # ← value must be a string
+  })
+}
