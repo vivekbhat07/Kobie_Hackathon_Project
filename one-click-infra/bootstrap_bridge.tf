@@ -55,20 +55,6 @@ resource "null_resource" "bootstrap_bridge" {
           --personal
       fi
 
-      # ── Create apps Kustomization if missing ──────────────────────────────
-      apps_ks=$(kubectl get kustomization apps -n flux-system 2>/dev/null || true)
-      if [ -z "$apps_ks" ]; then
-        echo "apps Kustomization missing - creating it."
-        flux create kustomization apps \
-          --source=GitRepository/flux-system \
-          --path="./apps" \
-          --prune=true \
-          --interval=5m \
-          --namespace=flux-system
-      else
-        echo "apps Kustomization already exists."
-      fi
-
       # ── Force reconcile source + apps ─────────────────────────────────────
       flux reconcile source git flux-system -n flux-system
       flux reconcile kustomization apps -n flux-system
@@ -87,8 +73,8 @@ resource "null_resource" "bootstrap_bridge" {
       done
 
       # ── Reconcile remaining Kustomizations ────────────────────────────────
-      flux reconcile kustomization alerting              -n flux-system
-      flux reconcile kustomization monitoring-config     -n flux-system
+      flux reconcile kustomization alerting               -n flux-system
+      flux reconcile kustomization monitoring-config      -n flux-system
       flux reconcile kustomization external-secrets-config -n flux-system
 
       echo "bootstrap_bridge done."
