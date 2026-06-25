@@ -10,56 +10,88 @@ resource "null_resource" "bootstrap_bridge" {
   ]
 
   provisioner "local-exec" {
-    interpreter = ["PowerShell", "-Command"]
+    interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
-      aws eks update-kubeconfig --name ${aws_eks_cluster.main.name} --region ${var.aws_region}
+      set -euo pipefail
 
-      $ready = $false
-      for ($i = 1; $i -le 30; $i++) {
-        $total = (kubectl get nodes --no-headers 2>$null | Measure-Object -Line).Lines
-        $readyCount = (kubectl get nodes --no-headers 2>$null | Select-String " Ready ").Count
-        if ($total -gt 0 -and $readyCount -eq $total) { $ready = $true; break }
-        Write-Host "nodes ready: $readyCount/$total (attempt $i/30)"
-        Start-Sleep -Seconds 10
-      }
+      # ── Update kubeconfig ──────────────────────────────────────────────────
+      aws eks update-kubeconfig \
+        --name ${aws_eks_cluster.main.name} \
+        --region ${var.aws_region}
 
-      $fluxNs = kubectl get namespace flux-system 2>$null
-      $sourceCtrl = kubectl get deployment -n flux-system source-controller 2>$null
-      if ($fluxNs -and $sourceCtrl) {
-        Write-Host "FluxCD already present - reconciling."
-      } else {
-        Write-Host "FluxCD not found - bootstrapping."
-        flux bootstrap github --owner=vivekbhat07 --repository=oneclick-gitops --branch=main --path=./clusters/my-cluster --personal
-      }
+      # ── Wait for all nodes to be Ready ────────────────────────────────────
+      echo "Waiting for nodes to be Ready..."
+      for i in $(seq 1 30); do
+        total=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
+        ready=$(kubectl get nodes --no-headers 2>/dev/null | awk '$2=="Ready"' | wc -l)
+        if [ "$total" -gt 0 ] && [ "$ready" -eq "$total" ]; then
+          echo "All $total node(s) Ready."
+          break
+        fi
+        echo "Nodes ready: $ready/$total (attempt $i/30)"
+        sleep 10
+      done
 
-      $appsKustomization = kubectl get kustomization apps -n flux-system 2>$null
-      if (-not $appsKustomization) {
-        Write-Host "apps Kustomization missing - creating it."
-        flux create kustomization apps --source=GitRepository/flux-system --path="./apps" --prune=true --interval=5m --namespace=flux-system
-      } else {
-        Write-Host "apps Kustomization already exists."
-      }
+      # ── Install Flux CLI if missing ────────────────────────────────────────
+      if ! command -v flux &>/dev/null; then
+        echo "Flux CLI not found - installing..."
+        curl -s https://fluxcd.io/install.sh | bash
+        export PATH="$HOME/.local/bin:$PATH"
+      fi
 
+      # ── Bootstrap or reconcile FluxCD ─────────────────────────────────────
+      flux_ns=$(kubectl get namespace flux-system 2>/dev/null || true)
+      source_ctrl=$(kubectl get deployment -n flux-system source-controller 2>/dev/null || true)
+
+      if [ -n "$flux_ns" ] && [ -n "$source_ctrl" ]; then
+        echo "FluxCD already present - reconciling."
+      else
+        echo "FluxCD not found - bootstrapping."
+        flux bootstrap github \
+          --owner=vivekbhat07 \
+          --repository=oneclick-gitops \
+          --branch=main \
+          --path=clusters/my-cluster \
+          --personal
+      fi
+
+      # ── Create apps Kustomization if missing ──────────────────────────────
+      apps_ks=$(kubectl get kustomization apps -n flux-system 2>/dev/null || true)
+      if [ -z "$apps_ks" ]; then
+        echo "apps Kustomization missing - creating it."
+        flux create kustomization apps \
+          --source=GitRepository/flux-system \
+          --path="./apps" \
+          --prune=true \
+          --interval=5m \
+          --namespace=flux-system
+      else
+        echo "apps Kustomization already exists."
+      fi
+
+      # ── Force reconcile source + apps ─────────────────────────────────────
       flux reconcile source git flux-system -n flux-system
       flux reconcile kustomization apps -n flux-system
 
-      Write-Host "Waiting for CRDs from apps HelmReleases (prometheus, external-secrets) to register..."
-      for ($i = 1; $i -le 30; $i++) {
-        $crdReady = kubectl get crd servicemonitors.monitoring.coreos.com 2>$null
-        $esoCrdReady = kubectl get crd externalsecrets.external-secrets.io 2>$null
-        if ($crdReady -and $esoCrdReady) {
-          Write-Host "Required CRDs are registered."
+      # ── Wait for required CRDs ─────────────────────────────────────────────
+      echo "Waiting for CRDs (ServiceMonitor, ExternalSecret) to register..."
+      for i in $(seq 1 30); do
+        crd_sm=$(kubectl get crd servicemonitors.monitoring.coreos.com 2>/dev/null || true)
+        crd_es=$(kubectl get crd externalsecrets.external-secrets.io 2>/dev/null || true)
+        if [ -n "$crd_sm" ] && [ -n "$crd_es" ]; then
+          echo "Required CRDs are registered."
           break
-        }
-        Write-Host "CRDs not ready yet (attempt $i/30)..."
-        Start-Sleep -Seconds 10
-      }
+        fi
+        echo "CRDs not ready yet (attempt $i/30)..."
+        sleep 10
+      done
 
-      flux reconcile kustomization alerting -n flux-system
-      flux reconcile kustomization monitoring-config -n flux-system
+      # ── Reconcile remaining Kustomizations ────────────────────────────────
+      flux reconcile kustomization alerting              -n flux-system
+      flux reconcile kustomization monitoring-config     -n flux-system
       flux reconcile kustomization external-secrets-config -n flux-system
 
-      Write-Host "bootstrap_bridge done."
+      echo "bootstrap_bridge done."
     EOT
   }
 }
