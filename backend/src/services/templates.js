@@ -57,7 +57,7 @@ const TEMPLATES = {
     group: 'deployment-down.rules',
     alert: 'DeploymentDown',
     summary: 'Deployment Down',
-    forDuration: '1m',
+    forDuration: '30s',
     defaultSeverity: 'critical',
     usesThreshold: true,
     defaultThreshold: '1',
